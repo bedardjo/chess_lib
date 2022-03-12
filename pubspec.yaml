@@ -1,7 +1,7 @@
 name: chess_lib
 description: Dart library for chess. Use this package for modelling a game of chess.
 
-version: 0.1.0+1
+version: 0.1.0+2
 
 repository: https://github.com/bedardjo/chess_lib.git
 
