@@ -10,6 +10,9 @@ import 'move-executor.dart';
 import 'player.dart';
 import 'valid-move-calculator.dart';
 
+/// Immutable Chess Game State. Can load from a fen with
+/// [ChessGameState.fromFen], or create a new board with [ChessGameState.initialBoardPosition]. From and position, get
+/// valid moves with the [moves] accessor.
 class ChessGameState {
   final ChessMove? lastMove;
   final List<List<ChessPiece>> board;
