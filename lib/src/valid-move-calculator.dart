@@ -9,8 +9,7 @@ import 'potential-moves.dart';
 import 'threat-detection.dart';
 
 List<ChessMove> getValidMoves(ChessMove? lastMove, Player player,
-    List<List<ChessPiece>> board, Set<Castling> availableCastling,
-    {bool? attachMoveString}) {
+    List<List<ChessPiece>> board, Set<Castling> availableCastling) {
   List<ChessMove> moves =
       getPotentialMoves(lastMove, player, board, availableCastling);
   List<List<ChessPiece>> boardCopy = copyBoard(board);
@@ -31,10 +30,15 @@ List<ChessMove> getValidMoves(ChessMove? lastMove, Player player,
     }
     undoMove(m, boardCopy);
   }
-  if (attachMoveString != null && attachMoveString) {
-    for (ChessMove m in validMoves) {
-      m.moveString = getMoveString(m, validMoves);
-    }
-  }
-  return validMoves;
+  return validMoves
+      .map((e) => ChessMove(
+          piece: e.piece,
+          start: e.start,
+          end: e.end,
+          capture: e.capture,
+          promotion: e.promotion,
+          castling: e.castling,
+          enPessant: e.enPessant,
+          moveString: getMoveString(e, validMoves)))
+      .toList();
 }

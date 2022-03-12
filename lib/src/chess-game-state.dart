@@ -48,8 +48,7 @@ class ChessGameState {
 
   List<ChessMove> get moves {
     if (_moves == null) {
-      _moves = getValidMoves(lastMove, currentPlayer, board, availableCastling,
-          attachMoveString: true);
+      _moves = getValidMoves(lastMove, currentPlayer, board, availableCastling);
     }
     return _moves!;
   }

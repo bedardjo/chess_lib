@@ -12,7 +12,7 @@ class ChessMove {
   final Castling castling;
   final bool enPessant;
 
-  String moveString = "";
+  final String moveString;
 
   ChessMove(
       {required this.piece,
@@ -21,7 +21,8 @@ class ChessMove {
       this.capture = ChessPiece.none,
       this.promotion = ChessPiece.none,
       this.castling = Castling.none,
-      this.enPessant = false});
+      this.enPessant = false,
+      this.moveString = ""});
 
   @override
   bool operator ==(o) =>
