@@ -50,7 +50,7 @@ class ChessGameState {
     if (_moves == null) {
       _moves = getValidMoves(lastMove, currentPlayer, board, availableCastling);
     }
-    return _moves!;
+    return [..._moves!];
   }
 
   ChessGameState playMove(ChessMove move) {
