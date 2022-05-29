@@ -6,7 +6,7 @@ import 'chess-piece.dart';
 import 'player.dart';
 
 const STARTING_POSITION_IDENTIFIER =
-    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq 0 1";
 
 String getFenBoard(List<List<ChessPiece>> board) {
   String str = "";
@@ -76,8 +76,7 @@ String getForsythEdwardsNotation(ChessGameState state) {
   // TODO half move clock?
   str += "0";
   str += " ";
-  // TODO This might be wrong? move count / 2?
-  str += "${state.moveCount}";
+  str += "${((state.moveCount + 1) / 2).ceil()}";
   return str;
 }
 
@@ -118,9 +117,10 @@ Set<Castling> _getCastling(String fenPart) {
 
 ChessGameState fromFen(String fen) {
   List<String> parts = fen.split(" ");
+  final playerIsWhite = parts[1] == 'w';
   return ChessGameState(
       board: _getBoardFromFenBoard(parts[0]),
-      currentPlayer: parts[1] == 'w' ? Player.white : Player.black,
+      currentPlayer: playerIsWhite ? Player.white : Player.black,
       availableCastling: _getCastling(parts[2]),
-      moveCount: int.parse(parts[5]));
+      moveCount: 2 * int.parse(parts[5]) - 2 + (playerIsWhite ? 0 : 1));
 }
