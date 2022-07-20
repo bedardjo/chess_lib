@@ -8,16 +8,23 @@ import 'chess-piece.dart';
 const _LONG_CASTLE = "O-O-O";
 const _SHORT_CASTLE = "O-O";
 
-ChessMove _moveForPiece(
-    PieceType type, Point<int> dest, List<ChessMove> validMoves) {
+ChessMove _moveForPiece(String moveString, PieceType type, Point<int> dest,
+    PieceType? promotion, List<ChessMove> validMoves) {
   List<ChessMove> ms = [];
   for (ChessMove m in validMoves) {
     if (m.piece.pieceType == type && m.end == dest) {
-      ms.add(m);
+      if (promotion != null) {
+        if (promotion == m.promotion.pieceType) {
+          ms.add(m);
+        }
+      } else {
+        ms.add(m);
+      }
     }
   }
   if (ms.isEmpty) {
-    throw Exception("could not find move!");
+    throw Exception(
+        "could not find move! $moveString ${type.unicodeCharacter} ${dest.toString()}");
   }
   if (ms.length != 1) {
     throw Exception("invalid! ${ms.length}");
@@ -25,24 +32,24 @@ ChessMove _moveForPiece(
   return ms.first;
 }
 
-ChessMove _moveForPieceAtStart(PieceType type, Point<int> start,
-    Point<int> dest, List<ChessMove> validMoves) {
+ChessMove _moveForPieceAtStart(String moveString, PieceType type,
+    Point<int> start, Point<int> dest, List<ChessMove> validMoves) {
   for (ChessMove m in validMoves) {
     if (m.piece.pieceType == type && m.start == start && m.end == dest) {
       return m;
     }
   }
-  throw Exception("invalid!");
+  throw Exception("invalid! $moveString");
 }
 
-ChessMove _moveForPieceAtFile(
-    PieceType type, int file, Point<int> dest, List<ChessMove> validMoves) {
+ChessMove _moveForPieceAtFile(String moveString, PieceType type, int file,
+    Point<int> dest, List<ChessMove> validMoves) {
   for (ChessMove m in validMoves) {
     if (m.piece.pieceType == type && m.start.x == file && m.end == dest) {
       return m;
     }
   }
-  throw Exception("invalid!");
+  throw Exception("invalid! $moveString");
 }
 
 ChessMove _moveForPieceAtRank(
@@ -55,10 +62,16 @@ ChessMove _moveForPieceAtRank(
   throw Exception("invalid!");
 }
 
-ChessMove _parseWithPiece(String disambiguation, bool isCap, PieceType type,
-    Point<int> dest, List<ChessMove> validMoves) {
+ChessMove _parseWithPiece(
+    String moveString,
+    String disambiguation,
+    bool isCap,
+    PieceType type,
+    Point<int> dest,
+    PieceType? promotion,
+    List<ChessMove> validMoves) {
   if (disambiguation.length == 0) {
-    return _moveForPiece(type, dest, validMoves);
+    return _moveForPiece(moveString, type, dest, promotion, validMoves);
   } else {
     if (disambiguation.length > 3) {
       throw new Exception("invalid disambiguation!");
@@ -67,55 +80,72 @@ ChessMove _parseWithPiece(String disambiguation, bool isCap, PieceType type,
     if (disambiguation.length == 2) {
       Point<int> start = Point("abcdefgh".indexOf(disambiguation[0]),
           "12345678".indexOf(disambiguation[1]));
-      return _moveForPieceAtStart(type, start, dest, validMoves);
+      return _moveForPieceAtStart(moveString, type, start, dest, validMoves);
     } else if ("abcdefgh".contains(disambiguation)) {
-      return _moveForPieceAtFile(
-          type, "abcdefgh".indexOf(disambiguation[0]), dest, validMoves);
+      return _moveForPieceAtFile(moveString, type,
+          "abcdefgh".indexOf(disambiguation[0]), dest, validMoves);
     } else if ("12345678".contains(disambiguation)) {
       return _moveForPieceAtRank(
           type, "12345678".indexOf(disambiguation[0]), dest, validMoves);
     }
   }
-  throw new Exception("invalid!");
+  throw new Exception("invalid could not disambiguate! $moveString");
 }
 
-ChessMove _getPawnMoveAtFile(
-    int file, Point<int> dest, List<ChessMove> validMoves) {
+ChessMove _getPawnMoveAtFile(int file, Point<int> dest, PieceType? promotion,
+    List<ChessMove> validMoves) {
   for (ChessMove m in validMoves) {
     if (m.piece.pieceType == PieceType.pawn &&
         m.start.x == file &&
         m.end == dest) {
-      return m;
+      if (promotion != null) {
+        if (m.promotion.pieceType == promotion) {
+          return m;
+        }
+      } else {
+        return m;
+      }
     }
   }
   throw Exception("couldn't find move");
 }
 
-ChessMove _parseWithDest(
-    String prefix, bool isCap, Point<int> dest, List<ChessMove> validMoves) {
+ChessMove _parseWithDest(String moveString, String prefix, bool isCap,
+    Point<int> dest, PieceType? promotion, List<ChessMove> validMoves) {
   if ("RBNQK".contains(prefix[0])) {
     PieceType pieceType = pieceTypeFromChar(prefix[0]);
-    return _parseWithPiece(
-        prefix.substring(1), isCap, pieceType, dest, validMoves);
+    return _parseWithPiece(moveString, prefix.substring(1), isCap, pieceType,
+        dest, promotion, validMoves);
   } else {
     if (!isCap) {
-      throw Exception("invalid move string");
+      throw Exception("invalid move string $moveString");
     }
     int file = "abcdefgh".indexOf(prefix);
-    return _getPawnMoveAtFile(file, dest, validMoves);
+    return _getPawnMoveAtFile(file, dest, promotion, validMoves);
   }
 }
 
-ChessMove _parseSimplePawnMove(Point<int> dest, List<ChessMove> validMoves) {
+ChessMove _parseSimplePawnMove(
+    Point<int> dest, PieceType? promotion, List<ChessMove> validMoves) {
   for (ChessMove m in validMoves) {
     if (m.piece.pieceType == PieceType.pawn && m.end == dest) {
-      return m;
+      if (promotion != null) {
+        if (promotion == m.promotion.pieceType) {
+          return m;
+        }
+      } else {
+        return m;
+      }
     }
   }
   throw Exception("couldn't find move");
 }
 
 ChessMove parseMoveString(String moveString, ChessGameState state) {
+  if (moveString.endsWith("+") || moveString.endsWith("#")) {
+    // check or mate, can safely delete last char
+    moveString = moveString.substring(0, moveString.length - 1);
+  }
   List<ChessMove> validMoves = state.moves;
   if (moveString == _LONG_CASTLE) {
     return validMoves.firstWhere((element) =>
@@ -126,24 +156,43 @@ ChessMove parseMoveString(String moveString, ChessGameState state) {
         element.castling != Castling.none &&
         element.castling.type == CastlingType.short);
   }
-  if (moveString.endsWith("+")) {
-    // check, can safely delete last char
-    moveString = moveString.substring(0, moveString.length - 1);
+  PieceType? promotion;
+  if (moveString.contains("=")) {
+    // promotion, determine which piece to promote to
+    int eqIdx = moveString.indexOf("=");
+    String promotionPiece = moveString.substring(moveString.indexOf("=") + 1);
+    promotion = pieceTypeFromChar(promotionPiece);
+    moveString = moveString.substring(0, eqIdx);
   }
   Point<int> dest = Point("abcdefgh".indexOf(moveString[moveString.length - 2]),
       "12345678".indexOf(moveString[moveString.length - 1]));
   if (moveString.length == 2) {
-    return _parseSimplePawnMove(dest, validMoves);
+    return _parseSimplePawnMove(dest, promotion, validMoves);
   } else {
     if (moveString.contains("×")) {
-      return _parseWithDest(moveString.substring(0, moveString.length - 3),
-          true, dest, validMoves);
+      return _parseWithDest(
+          moveString,
+          moveString.substring(0, moveString.length - 3),
+          true,
+          dest,
+          promotion,
+          validMoves);
     } else if (moveString.contains("x")) {
-      return _parseWithDest(moveString.substring(0, moveString.length - 3),
-          true, dest, validMoves);
+      return _parseWithDest(
+          moveString,
+          moveString.substring(0, moveString.length - 3),
+          true,
+          dest,
+          promotion,
+          validMoves);
     } else {
-      return _parseWithDest(moveString.substring(0, moveString.length - 2),
-          false, dest, validMoves);
+      return _parseWithDest(
+          moveString,
+          moveString.substring(0, moveString.length - 2),
+          false,
+          dest,
+          promotion,
+          validMoves);
     }
   }
 }
