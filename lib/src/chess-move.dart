@@ -14,6 +14,16 @@ class ChessMove {
 
   final String moveString;
 
+  String get longNotation {
+    String c1 = "${"abcdefgh"[start.y]}${start.x + 1}";
+    String c2 = "${"abcdefgh"[end.y]}${end.x + 1}";
+    String capPart = capture != ChessPiece.none ? "x" : "";
+    String promoPart =
+        promotion != ChessPiece.none ? promotion.unicodeCharacter : "";
+    // TODO: check
+    return "${c1}${capPart}${c2}${promoPart}";
+  }
+
   ChessMove(
       {required this.piece,
       required this.start,
